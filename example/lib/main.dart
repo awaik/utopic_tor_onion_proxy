@@ -1,21 +1,23 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:utopic_tor_onion_proxy/utopic_tor_onion_proxy.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
-  _MyAppState createState() => _MyAppState();
+  MyAppState createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   String? _torLocalPort;
   String? _error;
   String? _responseString;
@@ -26,7 +28,7 @@ class _MyAppState extends State<MyApp> {
     try {
       port = (await UtopicTorOnionProxy.startTor()).toString();
     } on Exception catch (e) {
-      print(e);
+      debugPrint(e.toString());
       _error = 'Failed to get port';
     }
 
@@ -45,7 +47,7 @@ class _MyAppState extends State<MyApp> {
         });
       }
     } on PlatformException catch (e) {
-      print(e.message ?? '');
+      debugPrint(e.message ?? '');
     }
   }
 
@@ -60,7 +62,7 @@ class _MyAppState extends State<MyApp> {
     _socket = await Socket.connect(
       InternetAddress.loopbackIPv4,
       int.tryParse(_torLocalPort!)!,
-      timeout: Duration(seconds: 5),
+      timeout: const Duration(seconds: 5),
     );
     _socket!.setOption(SocketOption.tcpNoDelay, true);
 
@@ -69,7 +71,7 @@ class _MyAppState extends State<MyApp> {
     List<int> responseIntList = [];
 
     void onSocketDone() {
-      print('socket done');
+      debugPrint('socket done');
       if (mounted) {
         setState(() {
           _responseString = String.fromCharCodes(responseIntList);
@@ -79,7 +81,7 @@ class _MyAppState extends State<MyApp> {
 
     _socket!.listen((event) async {
       if (event.length == 8 && event[0] == 0x00 && event[1] == 0x5A) {
-        print('Connection open');
+        debugPrint('Connection open');
 
         if (uri.scheme == 'https') {
           _socket = await SecureSocket.secure(
@@ -134,10 +136,9 @@ class _MyAppState extends State<MyApp> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      SizedBox(height: 20),
-                      Text(
-                          'Tor running on: ${_torLocalPort ?? _error ?? 'Unknown'}'),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
+                      Text('Tor running on: ${_torLocalPort ?? _error ?? 'Unknown'}'),
+                      const SizedBox(height: 20),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Wrap(
@@ -145,22 +146,18 @@ class _MyAppState extends State<MyApp> {
                           spacing: 20,
                           children: <Widget>[
                             OutlinedButton(
-                              child: Text('Start Tor Onion Proxy'),
-                              onPressed:
-                                  _torLocalPort == null ? _startTor : null,
+                              onPressed: _torLocalPort == null ? _startTor : null,
+                              child: const Text('Start Tor Onion Proxy'),
                             ),
                             OutlinedButton(
-                              child: Text('Stop Tor Onion Proxy'),
-                              onPressed:
-                                  _torLocalPort != null ? _stopTor : null,
+                              onPressed: _torLocalPort != null ? _stopTor : null,
+                              child: const Text('Stop Tor Onion Proxy'),
                             ),
                             OutlinedButton(
-                              child:
-                                  Text('Send request to check.torproject.org'),
                               onPressed: _torLocalPort != null
-                                  ? () => _sendGetRequest(
-                                      Uri.https('check.torproject.org', '/'))
+                                  ? () => _sendGetRequest(Uri.https('check.torproject.org', '/'))
                                   : null,
+                              child: const Text('Send request to check.torproject.org'),
                             ),
                           ],
                         ),
